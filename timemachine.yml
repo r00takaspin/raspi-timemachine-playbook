@@ -1,0 +1,88 @@
+---
+- hosts: raspberry
+  remote_user: pi
+  vars:
+    tm_path: /media/time_machine
+  tasks:
+    - shell: fdisk -l | grep HFS | awk '{print $1}'
+      register: backup_drive
+
+    - name: apt-get update
+      apt:
+        update_cache: yes
+    
+    - name: apg-get upgrade
+      apt:
+        upgrade: dist
+    
+    - name: install hfs utils
+      apt: name={{item}} state=present force=yes
+      with_items:
+        - hfsprogs
+        - hfsplus
+    
+    - name: create mount directory
+      file: path={{tm_path}} state=directory
+    
+    - name: add device to auto mount
+      lineinfile:
+        dest: /etc/fstab
+        line: '{{backup_drive.stdout}} {{tm_path}} hfsplus force,rw,user,noauto,x-systemd.automount 0 0'
+    
+    - name: mount external {{backup_drive.stdout}}
+      shell: mount -a
+
+    - name: install netatalk dependencies
+      apt: name={{item}} state=present
+      with_items:
+          - build-essential 
+          - libevent-dev
+          - libssl-dev
+          - libgcrypt11-dev
+          - libkrb5-dev
+          - libpam0g-dev
+          - libwrap0-dev
+          - libdb-dev
+          - libtdb-dev
+          - avahi-daemon
+          - libavahi-client-dev
+          - libacl1-dev
+          - libldap2-dev
+          - libcrack2-dev 
+          - systemtap-sdt-dev
+          - libdbus-1-dev
+          - libdbus-glib-1-dev
+          - libglib2.0-dev
+          - libio-socket-inet6-perl
+          - tracker
+          - libtracker-sparql-1.0-dev
+          - libtracker-miner-1.0-dev
+    
+    - name: install netatalk
+      apt: name=netatalk
+
+    - name: configure nsswitch
+      copy: 
+        src: ./templates/nsswitch.conf
+        dest: /etc/nsswitch.conf
+    
+    - name: configure afp
+      template:
+        src: ./templates/afp.conf.j2
+        dest: /usr/local/etc/afp.conf
+
+    - name: configure apple volumes
+      lineinfile:
+        dest: /etc/netatalk/AppleVolumes.default
+        line: '{{tm_path}} "Time Machine"   options:tm'
+
+    - name: enable avahi-daemon
+      shell: systemctl enable avahi-daemon
+
+    - name: enable netatalk
+      shell: systemctl enable netatalk
+
+    - name: HALT!
+      shell: reboot
+
+
