@@ -11,7 +11,7 @@ RPI_ADDR="$(arp -na | grep -i b8:27:eb | awk '{print $2}' | cut -c 2- | rev | cu
 # добавляем его в хосты
 echo "[raspberry]\n$RPI_ADDR" >> hosts
 
-ansible raspberry -m ping -i . --private-key=~/.ssh/keys/id_rsa -u pi
+ansible-playbook timemachine.yml -i hosts --become
 ```
 
 
