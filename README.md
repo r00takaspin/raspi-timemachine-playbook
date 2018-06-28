@@ -1,4 +1,6 @@
-# Ansible playbook for TimeMachine setup on Raspberry Pi
+# Ansible playbook for Time Machine setup on Raspberry Pi
+
+Ansible playbook of article ["Apple Time machine on RaspberryPI"](https://github.com/mr-bt/raspberrypi-timemachine).
 
 Prerequirements:
 * Rasberian Strench Lite (RPi)
